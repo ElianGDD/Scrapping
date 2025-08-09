@@ -27,7 +27,7 @@ public class ScrapingService {
 
     public Result<Producto> scrapeAndSave(String termino) throws IOException {
         Result<Producto> result = scraper.scrape(termino);
-        productoConexion.insertarProductos(result.objects); // Guardamos en la BD
+        productoConexion.insertarProductos(result.objects); 
         return result;
     }
 }

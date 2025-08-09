@@ -33,15 +33,15 @@ public class ControladorInicial {
     @Autowired
     private ScrapingService scrapingService;
 
-    @PostMapping("/scrape")
-    public ResponseEntity<Result<Producto>> scrape(@RequestParam String q) {
+    @GetMapping("/scrape")
+    public ResponseEntity<Result<Producto>> scrapeGet(@RequestParam String q) {
         try {
             Result<Producto> result = scrapingService.scrapeAndSave(q);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            e.getLocalizedMessage();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
 
 }

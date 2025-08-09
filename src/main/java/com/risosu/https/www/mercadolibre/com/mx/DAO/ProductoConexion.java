@@ -6,19 +6,21 @@ package com.risosu.https.www.mercadolibre.com.mx.DAO;
 
 import com.risosu.https.www.mercadolibre.com.mx.ML.Producto;
 import com.risosu.https.www.mercadolibre.com.mx.ML.Result;
+import java.sql.CallableStatement;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 import javax.sql.DataSource;
-import org.jsoup.Connection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class ProductoConexion implements ProductoInterface {
 
     @Autowired
-    private DataSource dataSource; 
+    private DataSource dataSource;
 
     @Override
     public Result DarProductos() {
@@ -26,22 +28,33 @@ public class ProductoConexion implements ProductoInterface {
     }
 
     public void insertarProductos(List<Producto> productos) {
-        String sql = "INSERT INTO producto (nombre, url) VALUES (?, ?)";
+        if (productos == null || productos.isEmpty()) {
+            System.out.println("No hay productos para insertar.");
+            return;
+        }
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+        String sql = "{CALL insertar_producto(?, ?)}";
+
+        try (Connection connection = dataSource.getConnection(); CallableStatement cs = connection.prepareCall(sql)) {
 
             for (Producto producto : productos) {
-                ps.setString(1, producto.getNombre());
-                ps.setString(2, producto.getUrl());
-                ps.addBatch(); // Agrega al lote
+                if (producto.getNombre() == null || producto.getUrl() == null) {
+                    System.out.println("Producto inválido, se omitirá: " + producto);
+                    continue;
+                }
+
+                cs.setString(1, producto.getNombre());
+                cs.setString(2, producto.getUrl());
+                cs.addBatch();
             }
 
-            ps.executeBatch(); 
+            int[] resultados = cs.executeBatch();
+            System.out.println("Se insertaron " + resultados.length + " productos usando la SP.");
 
         } catch (SQLException e) {
+            System.err.println("Error al insertar productos usando la SP:");
             e.printStackTrace();
         }
     }
-}
 
+}

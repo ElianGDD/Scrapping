@@ -1,17 +1,10 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.risosu.https.www.mercadolibre.com.mx.ML;
 
-/**
- *
- * @author Alien 13
- */
 public class Producto {
-    int id;
-    String nombre;
-    String url;
+    private int id;
+    private String nombre;
+    private String url;
+    private String imagen;
 
     public int getId() {
         return id;
@@ -36,7 +29,12 @@ public class Producto {
     public void setUrl(String url) {
         this.url = url;
     }
-    
-    
-    
+
+    public String getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(String imagen) {
+        this.imagen = imagen;
+    }
 }

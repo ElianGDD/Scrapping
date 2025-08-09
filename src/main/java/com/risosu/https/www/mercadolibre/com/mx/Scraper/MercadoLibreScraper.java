@@ -4,34 +4,66 @@ import com.risosu.https.www.mercadolibre.com.mx.ML.Producto;
 import com.risosu.https.www.mercadolibre.com.mx.ML.Result;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.jsoup.nodes.Element;
+
+@Component
 public class MercadoLibreScraper {
 
-    public Result scrape(String terminoBusqueda) throws IOException {
-        Result result = new Result();
-        String url = "https://www.mercadolibre.com.mx/"
-                + "busqueda?q=" + terminoBusqueda;
+    public Result<Producto> scrape(String terminoBusqueda) throws IOException {
+        Result<Producto> result = new Result<>();
+        Set<String> urlsUnicas = new HashSet<>();
 
-        Document doc = Jsoup.connect(url).get();
-        Elements titulos = doc.select(".ui-search-item__title");
-        Elements enlaces = doc.select("a.ui-search-item__group__element");
 
-        for (int i = 0; i < Math.min(titulos.size(), enlaces.size()); i++) {
-            String titulo = titulos.get(i).text();
-            String link = enlaces.get(i).attr("href");
+        Document document = Jsoup.connect("https://listado.mercadolibre.com.mx/" + terminoBusqueda).get();
+        
 
-            Producto producto = new Producto(); 
-            producto.setNombre(titulo);
-            producto.setUrl(link);
+        List<Element> items = document.getElementsByClass("poly-card");
 
-            result.objects.add(producto); 
+        if (items.isEmpty()) {
+            System.out.println("No se encontraron elementos con la clase 'ui-search-layout__item'");
+            result.correct = false;
+            result.errorMessage = "No se encontraron productos en la búsqueda.";
+            return result;
         }
 
+        int encontrados = 0;
+        for (Element item : items) {
+            Element linkElement = item.selectFirst("a.poly-component__title");
+            if (linkElement == null) {
+                continue;
+            }
+
+            String titulo = linkElement.text().trim();
+            String link = linkElement.absUrl("href");
+
+            if (urlsUnicas.add(link)) {
+                Producto producto = new Producto();
+                producto.setNombre(titulo);
+                producto.setUrl(link);
+
+                result.objects.add(producto);
+                encontrados++;
+            }
+        }
+
+        if (encontrados == 0) {
+            System.out.println("Se encontraron productos pero no se extrajo ningún título/URL.");
+            result.correct = false;
+            result.errorMessage = "No se pudieron extraer los datos de los productos.";
+            return result;
+        }
+
+        System.out.println("Productos extraídos: " + encontrados);
+        result.correct = true;
         return result;
     }
 }
